@@ -82,7 +82,7 @@ function draw() {
     for (let i = 0; i < bx.length; i++) {
       ellipse(bx[i], by[i], bulletSize, bulletSize);
     }
-    score++;
+    if (!gameOver) score++;
 
     fill(255);
     textSize(18);
@@ -105,10 +105,20 @@ function draw() {
     fill(255, 0, 0);
     textAlign(CENTER);
     textSize(35);
-    text("GAME OVER", width/2, (height/2)-20);
+    text("GAME OVER", width / 2, height / 2 - 80);
 
+    fill(255);
     textSize(18);
-    text("R : Restart", width/2, (height/2)+20);
+    text("생존 점수 : " + score, width / 2, height / 2 - 35);
+    text("파괴 점수 : " + destroyScore, width / 2, height / 2 - 5);
+
+    fill(color(255, 230, 80));
+    textSize(24);
+    text("최종 점수 : " + (score + destroyScore), width / 2, height / 2 + 35);
+
+    fill(255);
+    textSize(18);
+    text("R : Restart", width / 2, height / 2 + 85);
   }
 }
 
