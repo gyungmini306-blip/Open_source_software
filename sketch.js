@@ -9,9 +9,9 @@ let score = 0;
 let gameOver = false;
 let gameStarted = false;
 let playerSize = 25;
+let count = 0;
 
-
-let bgm, burstSound, img;
+let bgm, burstSound, bakcgroundimg;
 
 function stopGameAudio() {
   bgm.stop();
@@ -19,11 +19,13 @@ function stopGameAudio() {
 }
 
 async function setup() {
-  bgm        = await loadSound('assets/sounds/latin.mp3');
-  burstSound = await loadSound('assets/sounds/burst.mp3');
-  img        = await loadImage('assets/img/space.png');
-  createCanvas(500,500);
+  console.log(p5.prototype.VERSION)
+  bgm           = await loadSound('assets/sounds/latin.mp3');
+  burstSound    = await loadSound('assets/sounds/burst.mp3');
+  bakcgroundimg = await loadImage('assets/img/space.png');
 
+  createCanvas(500,500);
+  
   px = width / 2;
   py = height * 0.8;
 
@@ -39,7 +41,7 @@ async function setup() {
 
 function draw() {
   background(0);
-  image(img, 0, 0, width, height);
+  image(bakcgroundimg, 0, 0, width, height);
 
   if (!gameStarted) {
     fill(255);
@@ -47,16 +49,19 @@ function draw() {
     textSize(24);
     text("클릭하면 시작!", width / 2, height / 2 - 30);
     textSize(16);
-    text("WASD : 이동 / Shift : 느리게 ", width / 2, height / 2 + 10);
+    text("방향키 : 이동 / Shift : 느리게 ", width / 2, height / 2 + 10);
     text("R : 재시작", width / 2, height / 2 + 40);
     return;
   }
 
   if (!gameOver) {
-    PlayerMove();                
+    PlayerMove(); count++;
+
     let playerColor = color(100, 200, 255);
+
     if (keyIsDown(SHIFT)) 
       playerColor = color(255, 200, 50);
+
     fill(playerColor);
     ellipse(px, py, playerSize, playerSize);
     
@@ -72,9 +77,7 @@ function draw() {
       }
     }
 
-    if (gameOver == false) {
-      score++;
-    }
+    if (!gameOver) score++;
 
     fill(255);
     textSize(18);
@@ -101,7 +104,7 @@ function draw() {
 
     fill(255);
     textSize(18);
-    text("R : Restart", width / 2, height / 2 + 85);
+    text("R : 다시하기", width / 2, height / 2 + 85);
   }
 }
 
@@ -109,19 +112,17 @@ function PlayerMove() {
 
   let s = PlayerSpeed();
 
-  if (keyIsDown('KeyA')) px -= s;
-  if (keyIsDown('KeyD')) px += s;
-  if (keyIsDown('KeyW')) py -= s;
-  if (keyIsDown('KeyS')) py += s;
+  if (keyIsPressed) {
+    if      (key == LEFT_ARROW)  px -= s;
+    else if (key == RIGHT_ARROW) px += s;
+    else if (key == UP_ARROW)    py -= s;
+    else if (key == DOWN_ARROW)  py += s;
+  }
 
-  if (px < playerSize / 2)
-    px = playerSize / 2;
-  if (px > width - playerSize / 2)
-    px = width - playerSize / 2;
-  if (py < playerSize / 2)
-    py = playerSize / 2;
-  if (py > height - playerSize / 2)
-    py = height - playerSize / 2;
+  if (px < playerSize / 2)          px = playerSize / 2;
+  if (px > width - playerSize / 2)  px = width - playerSize / 2;
+  if (py < playerSize / 2)          py = playerSize / 2;
+  if (py > height - playerSize / 2) py = height - playerSize / 2;
 }
 
 function MeteorMove(i) {
@@ -133,7 +134,7 @@ function MeteorMove(i) {
 
   else if (type[i] == 1) {
     my[i] += speed[i];
-    mx[i] = startX[i] + sin(frameCount * 0.05 + i) * 100;
+    mx[i] = startX[i] + sin(count * 0.05 + i) * 100;
   }
 
   else {
@@ -176,7 +177,8 @@ function keyPressed() {
     }
 
     score = 0;
-
+    count = 0;
+    
     px = width / 2;
     py = height * 0.8;
 
@@ -191,7 +193,7 @@ function keyPressed() {
 }
 
 function mousePressed() { 
-  if (mouseButton.left == true && gameStarted == false) {
+  if (mouseButton.left && gameStarted == false) {
     gameStarted = true;
     bgm.play();
   }
