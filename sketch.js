@@ -1,4 +1,4 @@
-let n = 20;
+let n = 12;
 
 let mx    = [], my     = [];
 let speed = [], size   = [];
@@ -8,8 +8,14 @@ let px, py;
 let score = 0;
 let gameOver = false;
 let gameStarted = false;
-let playerSize = 25;
+let playerSize = 25; 
+let playerImgs = [];
+let direction = 2;
 let count = 0;
+
+let starX, starY;
+let starSize = 24;
+let starPoint = 1000;
 
 let bgm, burstSound, bakcgroundimg;
 
@@ -19,20 +25,25 @@ function stopGameAudio() {
 }
 
 async function setup() {
-  console.log(p5.prototype.VERSION)
   bgm           = await loadSound('assets/sounds/latin.mp3');
   burstSound    = await loadSound('assets/sounds/burst.mp3');
   bakcgroundimg = await loadImage('assets/img/space.png');
+
+  playerImgs[0] = await loadImage('assets/img/player-left.png');
+  playerImgs[1] = await loadImage('assets/img/player-right.png');
+  playerImgs[2] = await loadImage('assets/img/player-up.png');
+  playerImgs[3] = await loadImage('assets/img/player-down.png');
 
   createCanvas(500,500);
   
   px = width / 2;
   py = height * 0.8;
+  ResetStar();
 
   for (let i = 0; i < n; i++) {
     mx[i] = random(width);
     my[i] = random(-500, 0);
-    speed[i] = random(2, 4);
+    speed[i] = random(1, 2);
     size[i] = random(15, 30);
     type[i] = int(random(0, 3));
     startX[i] = mx[i];
@@ -51,19 +62,14 @@ function draw() {
     textSize(16);
     text("방향키 : 이동 / Shift : 느리게 ", width / 2, height / 2 + 10);
     text("R : 재시작", width / 2, height / 2 + 40);
+    text("노란 별 획득 : +" + starPoint + "점", width / 2, height / 2 + 70);
     return;
   }
 
   if (!gameOver) {
     PlayerMove(); count++;
 
-    let playerColor = color(100, 200, 255);
-
-    if (keyIsDown(SHIFT)) 
-      playerColor = color(255, 200, 50);
-
-    fill(playerColor);
-    ellipse(px, py, playerSize, playerSize);
+    image(playerImgs[direction], px - 25, py - 25, 50, 50);
     
     for (let i = 0; i < n; i++) 
       MeteorMove(i);
@@ -77,7 +83,10 @@ function draw() {
       }
     }
 
-    if (!gameOver) score++;
+    if (!gameOver) {
+      StarProcess();
+      score++;
+    }
 
     fill(255);
     textSize(18);
@@ -86,11 +95,8 @@ function draw() {
 
     textAlign(CENTER);
     textSize(14);
-    if (keyIsDown(SHIFT)) {
-      fill(color(255, 200, 50));
-    } else {
-      text("Shift : 느리게", width / 2, height - 15);
-    }
+    if   (keyIsDown(SHIFT)) fill(color(255, 200, 50));
+    else text("Shift : 느리게", width / 2, height - 15);
   }
 
   else {
@@ -108,27 +114,52 @@ function draw() {
   }
 }
 
-function PlayerMove() {
+function StarProcess() {
 
+  fill(255, 230, 80);
+  ellipse(starX, starY, starSize, starSize);
+
+  let d = dist(px, py, starX, starY);
+  if (d < playerSize / 2 + starSize / 2) {
+    score += starPoint;
+    ResetStar();
+  }
+}
+
+function ResetStar() {
+  starX = random(width);
+  starY = random(height);
+}
+
+function PlayerMove() {
   let s = PlayerSpeed();
 
-  if (keyIsPressed) {
-    if      (key == LEFT_ARROW)  px -= s;
-    else if (key == RIGHT_ARROW) px += s;
-    else if (key == UP_ARROW)    py -= s;
-    else if (key == DOWN_ARROW)  py += s;
+  if (keyIsDown(LEFT_ARROW)) {
+    px -= s;
+    direction = 0;
+  }
+  if (keyIsDown(RIGHT_ARROW)) {
+    px += s;
+    direction = 1;
+  }
+  if (keyIsDown(UP_ARROW)) {
+    py -= s;
+    direction = 2;
+  }
+  if (keyIsDown(DOWN_ARROW)) {
+    py += s;
+    direction = 3;
   }
 
-  if (px < playerSize / 2)          px = playerSize / 2;
-  if (px > width - playerSize / 2)  px = width - playerSize / 2;
-  if (py < playerSize / 2)          py = playerSize / 2;
-  if (py > height - playerSize / 2) py = height - playerSize / 2;
+  px = constrain(px, playerSize / 2, width - playerSize / 2);
+  py = constrain(py, playerSize / 2, height - playerSize / 2);
 }
 
 function MeteorMove(i) {
 
   if (type[i] == 0) {
     speed[i] += 0.1;
+    if (speed[i] > 5) speed[i] = 5;
     my[i] += speed[i];
   }
 
@@ -139,7 +170,7 @@ function MeteorMove(i) {
 
   else {
     my[i] += speed[i];
-    mx[i] += random(-3,3);
+    mx[i] += (noise(count * 0.01 + i * 10) - 0.5) * 6;
   }
 
   if (my[i] > height + 30) {
@@ -147,12 +178,12 @@ function MeteorMove(i) {
     my[i] = random(-150, 0);
     startX[i] = mx[i];
 
-    speed[i] = random(2, 4);
+    speed[i] = random(1, 2);
   }
 }
 
 function PlayerSpeed() {
-  if (keyIsPressed && keyIsDown(SHIFT))
+  if (keyIsDown(SHIFT))
     return 2;
   return 4;
 }
@@ -172,22 +203,26 @@ function keyPressed() {
     bgm.stop();
 
     gameOver = false;
+
     if (gameStarted == true) {
       bgm.play();
     }
 
     score = 0;
     count = 0;
+    direction = 2;
     
     px = width / 2;
     py = height * 0.8;
+
+  ResetStar();
 
     for (let i = 0; i < n; i++) {
       mx[i] = random(width);
       startX[i] = mx[i];
 
       my[i] = random(-500, 0);
-      speed[i] = random(2, 4);
+      speed[i] = random(1, 2);
     }
   }
 }
