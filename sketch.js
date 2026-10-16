@@ -1,14 +1,16 @@
 let n = 12;
 
-let mx    = [], my     = [];
-let speed = [], size   = [];
-let type  = [], startX = [];
+let mx = [], my = [];
+let speed = [], size = [];
+let type = [], startX = [];
 
 let px, py;
 let score = 0;
+let stage = 1;
+let meteorRate = 1;
 let gameOver = false;
 let gameStarted = false;
-let playerSize = 25; 
+let playerSize = 25;
 let playerImgs = [];
 let direction = 2;
 let count = 0;
@@ -17,7 +19,7 @@ let starX, starY;
 let starSize = 24;
 let starPoint = 1000;
 
-let bgm, burstSound, bakcgroundimg;
+let bgm, burstSound;
 
 function stopGameAudio() {
   bgm.stop();
@@ -25,17 +27,16 @@ function stopGameAudio() {
 }
 
 async function setup() {
-  bgm           = await loadSound('assets/sounds/latin.mp3');
-  burstSound    = await loadSound('assets/sounds/burst.mp3');
-  bakcgroundimg = await loadImage('assets/img/space.png');
+  bgm = await loadSound('assets/sounds/latin.mp3');
+  burstSound = await loadSound('assets/sounds/burst.mp3');
 
-  playerImgs[0] = await loadImage('assets/img/player-left.png');
-  playerImgs[1] = await loadImage('assets/img/player-right.png');
-  playerImgs[2] = await loadImage('assets/img/player-up.png');
-  playerImgs[3] = await loadImage('assets/img/player-down.png');
+  playerImgs[0] = await loadImage('assets/img/rocket0.png');
+  playerImgs[1] = await loadImage('assets/img/rocket1.png');
+  playerImgs[2] = await loadImage('assets/img/rocket2.png');
+  playerImgs[3] = await loadImage('assets/img/rocket3.png');
 
-  createCanvas(500,500);
-  
+  createCanvas(500, 500);
+
   px = width / 2;
   py = height * 0.8;
   ResetStar();
@@ -43,7 +44,7 @@ async function setup() {
   for (let i = 0; i < n; i++) {
     mx[i] = random(width);
     my[i] = random(-500, 0);
-    speed[i] = random(1, 2);
+    speed[i] = random(0.5, 1);
     size[i] = random(15, 30);
     type[i] = int(random(0, 3));
     startX[i] = mx[i];
@@ -52,7 +53,6 @@ async function setup() {
 
 function draw() {
   background(0);
-  image(bakcgroundimg, 0, 0, width, height);
 
   if (!gameStarted) {
     fill(255);
@@ -67,12 +67,15 @@ function draw() {
   }
 
   if (!gameOver) {
-    PlayerMove(); count++;
+    PlayerMove();
+    count++;
 
-    image(playerImgs[direction], px - 25, py - 25, 50, 50);
-    
-    for (let i = 0; i < n; i++) 
+    image(playerImgs[direction], px - playerSize / 2, py - playerSize / 2,
+      playerSize, playerSize);
+
+    for (let i = 0; i < n; i++) {
       MeteorMove(i);
+    }
 
     for (let i = 0; i < n; i++) {
       fill(150);
@@ -86,27 +89,30 @@ function draw() {
     if (!gameOver) {
       StarProcess();
       score++;
+      StageChange();
     }
 
     fill(255);
     textSize(18);
     textAlign(LEFT);
-    text("점수 : " + score, 15, 25);
+    text("점수 : " + score + " / 단계 : " + stage, 15, 25);
 
     textAlign(CENTER);
     textSize(14);
-    if   (keyIsDown(SHIFT)) fill(color(255, 200, 50));
-    else text("Shift : 느리게", width / 2, height - 15);
-  }
-
-  else {
+    if (keyIsDown(SHIFT)) {
+      fill(color(255, 200, 50));
+    } else {
+      fill(255);
+    }
+    text("Shift : 느리게", width / 2, height - 15);
+  } else {
     fill(255, 0, 0);
     textAlign(CENTER);
     textSize(35);
     text("GAME OVER", width / 2, height / 2 - 80);
     fill(color(255, 230, 80));
     textSize(24);
-    text("최종 점수 : " + score, width / 2, height / 2 );
+    text("최종 점수 : " + score, width / 2, height / 2);
 
     fill(255);
     textSize(18);
@@ -114,8 +120,20 @@ function draw() {
   }
 }
 
-function StarProcess() {
+function StageChange() {
+  if (score < 10000) {
+    stage = 1;
+  } else if (score < 15000) {
+    stage = 2;
+  } else if (score < 20000) {
+    stage = 3;
+  } else {
+    stage = 4;
+  }
+  meteorRate = 1 + (stage - 1) * 0.2;
+}
 
+function StarProcess() {
   fill(255, 230, 80);
   ellipse(starX, starY, starSize, starSize);
 
@@ -127,8 +145,8 @@ function StarProcess() {
 }
 
 function ResetStar() {
-  starX = random(width);
-  starY = random(height);
+  starX = random(100,width-100);
+  starY = random(100,height-100);
 }
 
 function PlayerMove() {
@@ -156,21 +174,22 @@ function PlayerMove() {
 }
 
 function MeteorMove(i) {
+  switch (type[i]) {
+    case 0:
+      speed[i] += 0.1;
+      if (speed[i] > 3) speed[i] = 3;
+      my[i] += speed[i] * meteorRate;
+      break;
 
-  if (type[i] == 0) {
-    speed[i] += 0.1;
-    if (speed[i] > 5) speed[i] = 5;
-    my[i] += speed[i];
-  }
+    case 1:
+      my[i] += speed[i] * meteorRate;
+      mx[i] = startX[i] + sin(count * 0.05 + i) * 50;
+      break;
 
-  else if (type[i] == 1) {
-    my[i] += speed[i];
-    mx[i] = startX[i] + sin(count * 0.05 + i) * 100;
-  }
-
-  else {
-    my[i] += speed[i];
-    mx[i] += (noise(count * 0.01 + i * 10) - 0.5) * 6;
+    case 2:
+      my[i] += speed[i] * meteorRate;
+      mx[i] += (noise(count * 0.01 + i * 10) - 0.5) * 6;
+      break;
   }
 
   if (my[i] > height + 30) {
@@ -183,17 +202,18 @@ function MeteorMove(i) {
 }
 
 function PlayerSpeed() {
-  if (keyIsDown(SHIFT))
+  if (keyIsDown(SHIFT)) {
     return 2;
+  }
   return 4;
 }
 
 function CheckHit(i) {
-
   let d = dist(px, py, mx[i], my[i]);
 
-  if (d < playerSize / 2 + size[i] / 2)
+  if (d < playerSize / 2 + size[i] / 2) {
     return true;
+  }
   return false;
 }
 
@@ -209,25 +229,27 @@ function keyPressed() {
     }
 
     score = 0;
+    stage = 1;
+    meteorRate = 1;
     count = 0;
     direction = 2;
-    
+
     px = width / 2;
     py = height * 0.8;
 
-  ResetStar();
+    ResetStar();
 
     for (let i = 0; i < n; i++) {
       mx[i] = random(width);
       startX[i] = mx[i];
 
       my[i] = random(-500, 0);
-      speed[i] = random(1, 2);
+      speed[i] = random(0.5, 1);
     }
   }
 }
 
-function mousePressed() { 
+function mousePressed() {
   if (mouseButton.left && gameStarted == false) {
     gameStarted = true;
     bgm.play();
