@@ -10,6 +10,8 @@ let stage = 1;
 let meteorRate = 1;
 let gameOver = false;
 let gameStarted = false;
+let buttonX = 130, buttonY = 185;
+let buttonWidth = 240, buttonHeight = 48;
 let playerSize = 25;
 let playerImgs = [];
 let direction = 2;
@@ -55,10 +57,37 @@ function draw() {
   background(0);
 
   if (!gameStarted) {
+    noStroke();
+    fill(25);
+    rect(50, 180, 400, 175);
+
+    stroke(100);
+    line(80, 240, 420, 240);
+    noFill();
+    arc(400, 110, 65, 65, PI / 2, PI * 3 / 2);
+
+    noStroke();
+    fill(120);
+    beginShape();
+    vertex(100, 100);
+    vertex(107, 110);
+    vertex(100, 120);
+    vertex(93, 110);
+    endShape(CLOSE);
+    noStroke();
+    fill(45);
+    rect(buttonX, buttonY, buttonWidth, buttonHeight);
     fill(255);
+    if (mouseX >= buttonX && mouseX <= buttonX + buttonWidth &&
+        mouseY >= buttonY && mouseY <= buttonY + buttonHeight) {
+      fill(255, 230, 80);
+      rect(buttonX, buttonY, buttonWidth, buttonHeight);
+      fill(0);
+    }
     textAlign(CENTER);
     textSize(24);
     text("클릭하면 시작!", width / 2, height / 2 - 30);
+    fill(255);
     textSize(16);
     text("방향키 : 이동 / Shift : 느리게 ", width / 2, height / 2 + 10);
     text("R : 재시작", width / 2, height / 2 + 40);
@@ -250,7 +279,9 @@ function keyPressed() {
 }
 
 function mousePressed() {
-  if (mouseButton.left && gameStarted == false) {
+  if (mouseButton.left && gameStarted == false &&
+      mouseX >= buttonX && mouseX <= buttonX + buttonWidth &&
+      mouseY >= buttonY && mouseY <= buttonY + buttonHeight) {
     gameStarted = true;
     bgm.play();
   }
