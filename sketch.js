@@ -88,10 +88,7 @@ function draw() {
     text("방향키 : 이동 / Shift : 느리게 ", width / 2, height / 2 + 10);
     text("R : 재시작", width / 2, height / 2 + 40);
     text("노란 별 획득 : +" + starPoint + "점", width / 2, height / 2 + 70);
-    return;
-  }
-
-  if (!gameOver) {
+  } else if (!gameOver) {
     PlayerMove();
     count++;
 
