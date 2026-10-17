@@ -1,3 +1,9 @@
+// 주제명: 우주선 운석 피하기
+// 주제설명: 방향키로 우주선을 움직여 운석을 피하고, 별을 획득하면 1,000점을 얻는 게임
+// 점수가 10,000점, 15,000점, 20,000점에 도달하면 난이도가 올라가고 운석의 낙하 속도가 빨라진다.
+// 학번: 2023111663
+// 이름: 박경민
+
 let n = 12;
 
 let mx = [], my = [];
@@ -20,6 +26,7 @@ let count = 0;
 let starX, starY;
 let starSize = 24;
 let starPoint = 1000;
+let starTime = 0;
 
 let bgm, burstSound;
 
@@ -63,17 +70,6 @@ function draw() {
 
     stroke(100);
     line(80, 240, 420, 240);
-    noFill();
-    arc(400, 110, 65, 65, PI / 2, PI * 3 / 2);
-
-    noStroke();
-    fill(120);
-    beginShape();
-    vertex(100, 100);
-    vertex(107, 110);
-    vertex(100, 120);
-    vertex(93, 110);
-    endShape(CLOSE);
     noStroke();
     fill(45);
     rect(buttonX, buttonY, buttonWidth, buttonHeight);
@@ -163,8 +159,23 @@ function StageChange() {
 }
 
 function StarProcess() {
+  starTime++;
+  if (starTime >= 120) {
+    ResetStar();
+  }
+  noFill();
+  stroke(255, 230, 80);
+  arc(starX, starY, starSize + 16, starSize + 16,
+      -PI / 2, -PI / 2 + map(starTime, 0, 120, PI * 2, 0));
+
+  noStroke();
   fill(255, 230, 80);
-  ellipse(starX, starY, starSize, starSize);
+  beginShape();
+  vertex(starX, starY - starSize / 2);
+  vertex(starX + starSize / 2, starY);
+  vertex(starX, starY + starSize / 2);
+  vertex(starX - starSize / 2, starY);
+  endShape(CLOSE);
 
   let d = dist(px, py, starX, starY);
   if (d < playerSize / 2 + starSize / 2) {
@@ -174,6 +185,7 @@ function StarProcess() {
 }
 
 function ResetStar() {
+  starTime = 0;
   starX = random(100,width-100);
   starY = random(100,height-100);
 }
