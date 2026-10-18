@@ -5,6 +5,7 @@
 // 이름: 박경민
 
 let n = 12;
+let c;
 
 let mx = [], my = [];
 let speed = [], size = [];
@@ -26,7 +27,7 @@ let count = 0;
 let starX, starY;
 let starSize = 24;
 let starPoint = 1000;
-let starTime = 0;
+let starTime = 0, setTime = 2;
 
 let bgm, burstSound;
 
@@ -55,7 +56,12 @@ async function setup() {
     my[i] = random(-500, 0);
     speed[i] = random(0.5, 1);
     size[i] = random(15, 30);
-    type[i] = int(random(0, 3));
+
+    let r = random(0, 3);
+    if      (r < 1) type[i] = 0;
+    else if (r < 2) type[i] = 1;
+    else            type[i] = 2;
+    
     startX[i] = mx[i];
   }
 }
@@ -92,16 +98,20 @@ function draw() {
     PlayerMove();
     count++;
 
-    image(playerImgs[direction], px - playerSize / 2, py - playerSize / 2,
-      playerSize, playerSize);
+    imageMode(CENTER);
+    image(playerImgs[direction], px, py, playerSize, playerSize);
 
-    for (let i = 0; i < n; i++) {
+    for (let i = 0; i < n; i++) 
       MeteorMove(i);
-    }
 
     for (let i = 0; i < n; i++) {
-      fill(150);
+      if (type[i] == 0)      c = color(180, 180, 180);
+      else if (type[i] == 1) c = color(140, 170, 200);
+      else                   c = color(190, 155, 130);
+
+      fill(c);
       ellipse(mx[i], my[i], size[i], size[i]);
+
       if (!gameOver && CheckHit(i)) {
         gameOver = true;
         stopGameAudio();
@@ -121,18 +131,15 @@ function draw() {
 
     textAlign(CENTER);
     textSize(14);
-    if (keyIsDown(SHIFT)) {
-      fill(color(255, 200, 50));
-    } else {
-      fill(255);
-    }
     text("Shift : 느리게", width / 2, height - 15);
-  } else {
+  } 
+  else {
     fill(255, 0, 0);
     textAlign(CENTER);
     textSize(35);
     text("GAME OVER", width / 2, height / 2 - 80);
-    fill(color(255, 230, 80));
+
+    fill(255, 230, 80);
     textSize(24);
     text("최종 점수 : " + score, width / 2, height / 2);
 
@@ -143,27 +150,24 @@ function draw() {
 }
 
 function StageChange() {
-  if (score < 10000) {
-    stage = 1;
-  } else if (score < 15000) {
-    stage = 2;
-  } else if (score < 20000) {
-    stage = 3;
-  } else {
-    stage = 4;
-  }
+  if (score < 10000)      stage = 1;
+  else if (score < 15000) stage = 2;
+  else if (score < 20000) stage = 3;
+  else                    stage = 4;
+  
   meteorRate = 1 + (stage - 1) * 0.2;
 }
 
 function StarProcess() {
-  starTime++;
-  if (starTime >= 120) {
-    ResetStar();
-  }
+  starTime += 1 / 60;
+  if (starTime >= setTime) ResetStar();
+
+  let pos = map(starTime, 0, setTime, PI * 2, 0);
+
   noFill();
   stroke(255, 230, 80);
   arc(starX, starY, starSize + 16, starSize + 16,
-      -PI / 2, -PI / 2 + map(starTime, 0, 120, PI * 2, 0));
+      -PI / 2, -PI / 2 + pos);
 
   noStroke();
   fill(255, 230, 80);
@@ -183,6 +187,7 @@ function StarProcess() {
 
 function ResetStar() {
   starTime = 0;
+
   starX = random(100,width-100);
   starY = random(100,height-100);
 }
@@ -249,9 +254,8 @@ function PlayerSpeed() {
 function CheckHit(i) {
   let d = dist(px, py, mx[i], my[i]);
 
-  if (d < playerSize / 2 + size[i] / 2) {
+  if (d < playerSize / 2 + size[i] / 2) 
     return true;
-  }
   return false;
 }
 
@@ -262,9 +266,7 @@ function keyPressed() {
 
     gameOver = false;
 
-    if (gameStarted == true) {
-      bgm.play();
-    }
+    if (gameStarted == true) bgm.play();
 
     score = 0;
     stage = 1;
@@ -280,7 +282,6 @@ function keyPressed() {
     for (let i = 0; i < n; i++) {
       mx[i] = random(width);
       startX[i] = mx[i];
-
       my[i] = random(-500, 0);
       speed[i] = random(0.5, 1);
     }
