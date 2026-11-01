@@ -25,8 +25,6 @@ let direction = 2;
 let count = 0;
 let bullets = [], ammo = 0, ammoPerStar = 3;
 let shootTime = 0;
-let meteorPoint = 100;
-let hitX, hitY, hitSize, hitTime = 0;
 
 let starX, starY;
 let starSize = 24;
@@ -102,7 +100,6 @@ function draw() {
     text("방향키 : 이동 / Shift : 느리게 ", width / 2, height / 2 + 10);
     text("가까운 운석 자동 발사 / R : 재시작", width / 2, height / 2 + 40);
     text("별 : +" + starPoint + "점 / 탄약 +" + ammoPerStar, width / 2, height / 2 + 70);
-    text("별은 " + setTime + "초마다 다른 위치에 생성", width / 2, height / 2 + 100);
   } else if (!gameOver) {
     BackgroundProcess();
     PlayerMove();
@@ -316,25 +313,13 @@ function BulletProcess() {
       for (let j = n - 1; j >= 0; j--) {
         let d = dist(bullets[i].x, bullets[i].y, mx[j], my[j]);
         if (d < (bullets[i].size + size[j]) / 2) {
-          hitX = mx[j];
-          hitY = my[j];
-          hitSize = size[j] * 2;
-          hitTime = 0.15;
           burstSound.play();
-          score += meteorPoint;
           ResetMeteor(j);
           bullets.splice(i, 1);
           break;
         }
       }
     }
-  }
-
-  if (hitTime > 0) {
-    noStroke();
-    fill(255, 100, 40);
-    ellipse(hitX, hitY, hitSize, hitSize);
-    hitTime -= 1 / 60;
   }
 }
 
@@ -370,7 +355,6 @@ function keyPressed() {
     bullets = [];
     ammo = 0;
     shootTime = 0;
-    hitTime = 0;
     bgY1 = 0;
     bgY2 = -height;
 
