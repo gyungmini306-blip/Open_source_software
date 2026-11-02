@@ -4,7 +4,10 @@
 // 학번: 2023111663
 // 이름: 박경민
 
-let n = 12;
+
+//11주차 객체 리터럴 C언어의 구조체와 동일한 역할 변수를 엮은게 함수까지 엮음, 클래스 객체 들어감
+
+let n = 18;
 let c;
 
 let mx = [], my = [];
@@ -25,6 +28,8 @@ let playerSize = 25;
 let playerImgs = [];
 let direction = 2;
 let count = 0;
+let bullets = [], ammo = 0, ammoPerStar = 3;
+let meteorPoint = 100;
 
 let starX, starY;
 let starSize = 24;
@@ -64,15 +69,14 @@ async function setup() {
     size[i] = random(15, 30);
     speedX[i] = random(1, 2);
 
-    let r = random(0, 3);
+    let r = random(0, 4);
     if      (r < 1) type[i] = 0;
     else if (r < 2) type[i] = 1;
-    else            type[i] = 2;
+    else if (r < 3) type[i] = 2;
+    else            type[i] = 3;
 
     startX[i] = mx[i];
   }
-  type[n - 2] = 3;
-  type[n - 1] = 3;
 }
 
 function draw() {
@@ -101,8 +105,8 @@ function draw() {
     fill(255);
     textSize(16);
     text("방향키 : 이동 / Shift : 느리게 ", width / 2, height / 2 + 10);
-    text("R : 재시작", width / 2, height / 2 + 40);
-    text("노란 별 획득 : +" + starPoint + "점", width / 2, height / 2 + 70);
+    text("스페이스 : 발사 / R : 재시작", width / 2, height / 2 + 40);
+    text("별 : +" + starPoint + "점 / 탄약 +" + ammoPerStar, width / 2, height / 2 + 70);
   } else if (!gameOver) {
     BackgroundProcess();
     PlayerMove();
@@ -113,6 +117,8 @@ function draw() {
 
     for (let i = 0; i < n; i++)
       MeteorMove(i);
+
+    BulletProcess();
 
     for (let i = 0; i < n; i++) {
       if (type[i] == 0)      c = color(180, 180, 180);
@@ -134,6 +140,7 @@ function draw() {
       score++;
       StageChange();
     }
+
     if (score > bestScore) bestScore = score;
 
     fill(255);
@@ -141,10 +148,13 @@ function draw() {
     textAlign(LEFT);
     text("점수 : " + score + " / 단계 : " + stage, 15, 25);
     text("최고 점수 : " + bestScore, 15, 50);
+    fill(100, 220, 255);
+    text("탄약 : " + ammo, 15, 75);
+    fill(255);
 
     textAlign(CENTER);
     textSize(14);
-    text("Shift : 느리게", width / 2, height - 15);
+    text("스페이스 : 발사 / Shift : 느리게", width / 2, height - 15);
   }
   else {
     fill(255, 0, 0);
@@ -206,6 +216,7 @@ function StarProcess() {
   let d = dist(px, py, starX, starY);
   if (d < playerSize / 2 + starSize / 2) {
     score += starPoint;
+    ammo += ammoPerStar;
     ResetStar();
   }
 }
@@ -270,13 +281,47 @@ function MeteorMove(i) {
       break;
   }
 
-  if (my[i] > height + 30) {
-    mx[i] = random(width);
-    my[i] = random(-150, 0);
-    startX[i] = mx[i];
+  if (my[i] > height + 30) ResetMeteor(i);
+}
 
-    speed[i] = random(1, 2);
-    speedX[i] = random(1, 2);
+function ResetMeteor(i) {
+  mx[i] = random(width);
+  my[i] = random(-150, 0);
+  startX[i] = mx[i];
+  speed[i] = random(1, 2);
+  speedX[i] = random(1, 2);
+}
+
+function Shoot() {
+  if (ammo > 0) {
+    let bullet = { x: px, y: py, size: 8, speed: 8 };
+    bullets.push(bullet);
+    ammo--;
+  }
+}
+
+function BulletProcess() {
+  for (let i = bullets.length - 1; i >= 0; i--) {
+    bullets[i].y -= bullets[i].speed;
+
+    noStroke();
+    fill(100, 220, 255);
+    ellipse(bullets[i].x, bullets[i].y, bullets[i].size, bullets[i].size);
+
+    if (bullets[i].y < 0) {
+      bullets.splice(i, 1);
+    } else {
+      for (let j = n - 1; j >= 0; j--) {
+        let d = dist(bullets[i].x, bullets[i].y, mx[j], my[j]);
+        if (d < (bullets[i].size + size[j]) / 2) {
+          burstSound.play();
+          score += meteorPoint;
+          ResetMeteor(j);
+          bullets.splice(i, 1);
+          break;
+        }
+      }
+    }
   }
 }
 
@@ -296,6 +341,9 @@ function CheckHit(i) {
 }
 
 function keyPressed() {
+  if (key == ' ' && gameStarted && !gameOver) {
+    Shoot();
+  }
   if (key == 'r' || key == 'R') {
     burstSound.stop();
     bgm.stop();
@@ -309,6 +357,8 @@ function keyPressed() {
     meteorRate = 1;
     count = 0;
     direction = 2;
+    bullets = [];
+    ammo = 0;
     bgY1 = 0;
     bgY2 = -height;
 
