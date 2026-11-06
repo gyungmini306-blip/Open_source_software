@@ -292,9 +292,28 @@ function ResetMeteor(i) {
   speedX[i] = random(1, 2);
 }
 
+class Bullet {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.size = 8;
+    this.speed = 8;
+  }
+
+  move() {
+    this.y -= this.speed;
+  }
+
+  display(c) {
+    noStroke();
+    fill(c);
+    ellipse(this.x, this.y, this.size, this.size);
+  }
+}
+
 function Shoot() {
   if (ammo > 0) {
-    let bullet = { x: px, y: py, size: 8, speed: 8 };
+    let bullet = new Bullet(px, py);
     bullets.push(bullet);
     ammo--;
   }
@@ -302,11 +321,8 @@ function Shoot() {
 
 function BulletProcess() {
   for (let i = bullets.length - 1; i >= 0; i--) {
-    bullets[i].y -= bullets[i].speed;
-
-    noStroke();
-    fill(100, 220, 255);
-    ellipse(bullets[i].x, bullets[i].y, bullets[i].size, bullets[i].size);
+    bullets[i].move();
+    bullets[i].display(color(100, 220, 255));
 
     if (bullets[i].y < 0) {
       bullets.splice(i, 1);
