@@ -12,7 +12,7 @@ let c;
 
 let meteors = [];
 
-let px, py;
+let player;
 let score = 0;
 let bestScore = 0;
 let stage = 1;
@@ -21,9 +21,7 @@ let gameOver = false;
 let gameStarted = false;
 let buttonX = 130, buttonY = 185;
 let buttonWidth = 240, buttonHeight = 48;
-let playerSize = 25;
 let playerImgs = [];
-let direction = 2;
 let count = 0;
 let bullets = [], ammo = 0, ammoPerStar = 3;
 let meteorPoint = 100;
@@ -55,8 +53,7 @@ async function setup() {
   bgY1 = 0;
   bgY2 = -height;
 
-  px = width / 2;
-  py = height * 0.8;
+  player = new Player();
   ResetStar();
 
   for (let i = 0; i < n; i++) {
@@ -101,11 +98,10 @@ function draw() {
     text("별 : +" + starPoint + "점 / 탄약 +" + ammoPerStar, width / 2, height / 2 + 70);
   } else if (!gameOver) {
     BackgroundProcess();
-    PlayerMove();
+    player.move();
     count++;
 
-    imageMode(CENTER);
-    image(playerImgs[direction], px, py, playerSize, playerSize);
+    player.display();
 
     for (let i = 0; i < n; i++)
       meteors[i].move(meteorRate);
@@ -199,8 +195,8 @@ function StarProcess() {
   vertex(starX - starSize / 2, starY);
   endShape(CLOSE);
 
-  let d = dist(px, py, starX, starY);
-  if (d < playerSize / 2 + starSize / 2) {
+  let d = dist(player.x, player.y, starX, starY);
+  if (d < player.size / 2 + starSize / 2) {
     score += starPoint;
     ammo += ammoPerStar;
     ResetStar();
@@ -214,28 +210,48 @@ function ResetStar() {
   starY = random(100,height-100);
 }
 
-function PlayerMove() {
-  let s = PlayerSpeed();
-
-  if (keyIsDown(LEFT_ARROW)) {
-    px -= s;
-    direction = 0;
-  }
-  if (keyIsDown(RIGHT_ARROW)) {
-    px += s;
-    direction = 1;
-  }
-  if (keyIsDown(UP_ARROW)) {
-    py -= s;
-    direction = 2;
-  }
-  if (keyIsDown(DOWN_ARROW)) {
-    py += s;
-    direction = 3;
+class Player {
+  constructor() {
+    this.x = width / 2;
+    this.y = height * 0.8;
+    this.size = 25;
+    this.direction = 2;
   }
 
-  px = constrain(px, playerSize / 2, width - playerSize / 2);
-  py = constrain(py, playerSize / 2, height - playerSize / 2);
+  move() {
+    let s = PlayerSpeed();
+
+    if (keyIsDown(LEFT_ARROW)) {
+      this.x -= s;
+      this.direction = 0;
+    }
+    if (keyIsDown(RIGHT_ARROW)) {
+      this.x += s;
+      this.direction = 1;
+    }
+    if (keyIsDown(UP_ARROW)) {
+      this.y -= s;
+      this.direction = 2;
+    }
+    if (keyIsDown(DOWN_ARROW)) {
+      this.y += s;
+      this.direction = 3;
+    }
+
+    this.x = constrain(this.x, this.size / 2, width - this.size / 2);
+    this.y = constrain(this.y, this.size / 2, height - this.size / 2);
+  }
+
+  display() {
+    imageMode(CENTER);
+    image(playerImgs[this.direction], this.x, this.y, this.size, this.size);
+  }
+
+  reset() {
+    this.x = width / 2;
+    this.y = height * 0.8;
+    this.direction = 2;
+  }
 }
 
 class Meteor {
@@ -284,10 +300,10 @@ class Meteor {
   }
 
   display() {
-    if (this.type == 0)      c = color(180, 180, 180);
+    if      (this.type == 0) c = color(180, 180, 180);
     else if (this.type == 1) c = color(140, 170, 200);
     else if (this.type == 2) c = color(190, 155, 130);
-    else                   c = color(190, 140, 240);
+    else                     c = color(190, 140, 240);
 
     fill(c);
     ellipse(this.x, this.y,
@@ -305,7 +321,7 @@ class Meteor {
 
 function Shoot() {
   if (ammo > 0) {
-    let bullet = { x: px, y: py, size: 8, speed: 8 };
+    let bullet = { x: player.x, y: player.y, size: 8, speed: 8 };
     bullets.push(bullet);
     ammo--;
   }
@@ -345,9 +361,9 @@ function PlayerSpeed() {
 }
 
 function CheckHit(i) {
-  let d = dist(px, py, meteors[i].x, meteors[i].y);
+  let d = dist(player.x, player.y, meteors[i].x, meteors[i].y);
 
-  if (d < playerSize / 2 + meteors[i].size / 2)
+  if (d < player.size / 2 + meteors[i].size / 2)
     return true;
   return false;
 }
@@ -368,14 +384,12 @@ function keyPressed() {
     stage = 1;
     meteorRate = 1;
     count = 0;
-    direction = 2;
     bullets = [];
     ammo = 0;
     bgY1 = 0;
     bgY2 = -height;
 
-    px = width / 2;
-    py = height * 0.8;
+    player.reset();
 
     ResetStar();
 
