@@ -60,15 +60,7 @@ async function setup() {
   ResetStar();
 
   for (let i = 0; i < n; i++) {
-    meteors[i] = {
-      x: random(width),
-      y: random(-500, 0),
-      speed: random(0.5, 1),
-      size: random(15, 30),
-      speedX: random(1, 2),
-      type: 0,
-      startX: 0
-    };
+    meteors[i] = new Meteor(i);
 
     let r = random(0, 4);
     if      (r < 1) meteors[i].type = 0;
@@ -76,7 +68,6 @@ async function setup() {
     else if (r < 3) meteors[i].type = 2;
     else            meteors[i].type = 3;
 
-    meteors[i].startX = meteors[i].x;
   }
 }
 
@@ -117,19 +108,12 @@ function draw() {
     image(playerImgs[direction], px, py, playerSize, playerSize);
 
     for (let i = 0; i < n; i++)
-      MeteorMove(i);
+      meteors[i].move(meteorRate);
 
     BulletProcess();
 
     for (let i = 0; i < n; i++) {
-      if (meteors[i].type == 0)      c = color(180, 180, 180);
-      else if (meteors[i].type == 1) c = color(140, 170, 200);
-      else if (meteors[i].type == 2) c = color(190, 155, 130);
-      else                   c = color(190, 140, 240);
-
-      fill(c);
-      ellipse(meteors[i].x, meteors[i].y,
-              meteors[i].size, meteors[i].size);
+      meteors[i].display();
 
       if (!gameOver && CheckHit(i)) {
         gameOver = true;
@@ -254,69 +238,74 @@ function PlayerMove() {
   py = constrain(py, playerSize / 2, height - playerSize / 2);
 }
 
-function MeteorMove(i) {
-  switch (meteors[i].type) {
-    case 0:
-      meteors[i].speed += 0.1;
-      if (meteors[i].speed > 3) meteors[i].speed = 3;
-      meteors[i].y += meteors[i].speed * meteorRate;
-      break;
-
-    case 1:
-      meteors[i].y += meteors[i].speed * meteorRate;
-      meteors[i].x = meteors[i].startX + sin(count * 0.05 + i) * 50;
-      break;
-
-    case 2:
-      meteors[i].y += meteors[i].speed * meteorRate;
-      let moveX = noise(count * 0.01 + i * 10);
-      meteors[i].x += moveX * 6 - 3;
-      break;
-
-    case 3:
-      meteors[i].y += meteors[i].speed * meteorRate;
-      meteors[i].x += meteors[i].speedX;
-      if (meteors[i].x < meteors[i].size / 2 || meteors[i].x > width - meteors[i].size / 2) {
-        meteors[i].x = constrain(meteors[i].x, meteors[i].size / 2,
-                                 width - meteors[i].size / 2);
-        meteors[i].speedX *= -1;
-      }
-      break;
+class Meteor {
+  constructor(i) {
+    this.x = random(width);
+    this.y = random(-500, 0);
+    this.speed = random(0.5, 1);
+    this.size = random(15, 30);
+    this.speedX = random(1, 2);
+    this.type = 0;
+    this.startX = this.x;
+    this.index = i;
   }
 
-  if (meteors[i].y > height + 30) ResetMeteor(i);
-}
+  move(rate) {
+    switch (this.type) {
+      case 0:
+        this.speed += 0.1;
+        if (this.speed > 3) this.speed = 3;
+        this.y += this.speed * rate;
+        break;
 
-function ResetMeteor(i) {
-  meteors[i].x = random(width);
-  meteors[i].y = random(-150, 0);
-  meteors[i].startX = meteors[i].x;
-  meteors[i].speed = random(1, 2);
-  meteors[i].speedX = random(1, 2);
-}
+      case 1:
+        this.y += this.speed * rate;
+        this.x = this.startX + sin(count * 0.05 + this.index) * 50;
+        break;
 
-class Bullet {
-  constructor(x, y) {
-    this.x = x;
-    this.y = y;
-    this.size = 8;
-    this.speed = 8;
+      case 2:
+        this.y += this.speed * rate;
+        let moveX = noise(count * 0.01 + this.index * 10);
+        this.x += moveX * 6 - 3;
+        break;
+
+      case 3:
+        this.y += this.speed * rate;
+        this.x += this.speedX;
+        if (this.x < this.size / 2 || this.x > width - this.size / 2) {
+          this.x = constrain(this.x, this.size / 2,
+                             width - this.size / 2);
+          this.speedX *= -1;
+        }
+        break;
+    }
+
+    if (this.y > height + 30) this.reset();
   }
 
-  move() {
-    this.y -= this.speed;
-  }
+  display() {
+    if (this.type == 0)      c = color(180, 180, 180);
+    else if (this.type == 1) c = color(140, 170, 200);
+    else if (this.type == 2) c = color(190, 155, 130);
+    else                   c = color(190, 140, 240);
 
-  display(c) {
-    noStroke();
     fill(c);
-    ellipse(this.x, this.y, this.size, this.size);
+    ellipse(this.x, this.y,
+            this.size, this.size);
+  }
+
+  reset() {
+    this.x = random(width);
+    this.y = random(-150, 0);
+    this.startX = this.x;
+    this.speed = random(1, 2);
+    this.speedX = random(1, 2);
   }
 }
 
 function Shoot() {
   if (ammo > 0) {
-    let bullet = new Bullet(px, py);
+    let bullet = { x: px, y: py, size: 8, speed: 8 };
     bullets.push(bullet);
     ammo--;
   }
@@ -324,8 +313,11 @@ function Shoot() {
 
 function BulletProcess() {
   for (let i = bullets.length - 1; i >= 0; i--) {
-    bullets[i].move();
-    bullets[i].display(color(100, 220, 255));
+    bullets[i].y -= bullets[i].speed;
+
+    noStroke();
+    fill(100, 220, 255);
+    ellipse(bullets[i].x, bullets[i].y, bullets[i].size, bullets[i].size);
 
     if (bullets[i].y < 0) {
       bullets.splice(i, 1);
@@ -336,7 +328,7 @@ function BulletProcess() {
         if (d < (bullets[i].size + meteors[j].size) / 2) {
           burstSound.play();
           score += meteorPoint;
-          ResetMeteor(j);
+          meteors[j].reset();
           bullets.splice(i, 1);
           break;
         }
