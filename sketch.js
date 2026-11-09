@@ -10,10 +10,7 @@
 let n = 18;
 let c;
 
-let mx = [], my = [];
-let speed = [], size = [];
-let type = [], startX = [];
-let speedX = [];
+let meteors = [];
 
 let px, py;
 let score = 0;
@@ -63,19 +60,23 @@ async function setup() {
   ResetStar();
 
   for (let i = 0; i < n; i++) {
-    mx[i] = random(width);
-    my[i] = random(-500, 0);
-    speed[i] = random(0.5, 1);
-    size[i] = random(15, 30);
-    speedX[i] = random(1, 2);
+    meteors[i] = {
+      x: random(width),
+      y: random(-500, 0),
+      speed: random(0.5, 1),
+      size: random(15, 30),
+      speedX: random(1, 2),
+      type: 0,
+      startX: 0
+    };
 
     let r = random(0, 4);
-    if      (r < 1) type[i] = 0;
-    else if (r < 2) type[i] = 1;
-    else if (r < 3) type[i] = 2;
-    else            type[i] = 3;
+    if      (r < 1) meteors[i].type = 0;
+    else if (r < 2) meteors[i].type = 1;
+    else if (r < 3) meteors[i].type = 2;
+    else            meteors[i].type = 3;
 
-    startX[i] = mx[i];
+    meteors[i].startX = meteors[i].x;
   }
 }
 
@@ -121,13 +122,14 @@ function draw() {
     BulletProcess();
 
     for (let i = 0; i < n; i++) {
-      if (type[i] == 0)      c = color(180, 180, 180);
-      else if (type[i] == 1) c = color(140, 170, 200);
-      else if (type[i] == 2) c = color(190, 155, 130);
+      if (meteors[i].type == 0)      c = color(180, 180, 180);
+      else if (meteors[i].type == 1) c = color(140, 170, 200);
+      else if (meteors[i].type == 2) c = color(190, 155, 130);
       else                   c = color(190, 140, 240);
 
       fill(c);
-      ellipse(mx[i], my[i], size[i], size[i]);
+      ellipse(meteors[i].x, meteors[i].y,
+              meteors[i].size, meteors[i].size);
 
       if (!gameOver && CheckHit(i)) {
         gameOver = true;
@@ -253,43 +255,44 @@ function PlayerMove() {
 }
 
 function MeteorMove(i) {
-  switch (type[i]) {
+  switch (meteors[i].type) {
     case 0:
-      speed[i] += 0.1;
-      if (speed[i] > 3) speed[i] = 3;
-      my[i] += speed[i] * meteorRate;
+      meteors[i].speed += 0.1;
+      if (meteors[i].speed > 3) meteors[i].speed = 3;
+      meteors[i].y += meteors[i].speed * meteorRate;
       break;
 
     case 1:
-      my[i] += speed[i] * meteorRate;
-      mx[i] = startX[i] + sin(count * 0.05 + i) * 50;
+      meteors[i].y += meteors[i].speed * meteorRate;
+      meteors[i].x = meteors[i].startX + sin(count * 0.05 + i) * 50;
       break;
 
     case 2:
-      my[i] += speed[i] * meteorRate;
+      meteors[i].y += meteors[i].speed * meteorRate;
       let moveX = noise(count * 0.01 + i * 10);
-      mx[i] += moveX * 6 - 3;
+      meteors[i].x += moveX * 6 - 3;
       break;
 
     case 3:
-      my[i] += speed[i] * meteorRate;
-      mx[i] += speedX[i];
-      if (mx[i] < size[i] / 2 || mx[i] > width - size[i] / 2) {
-        mx[i] = constrain(mx[i], size[i] / 2, width - size[i] / 2);
-        speedX[i] *= -1;
+      meteors[i].y += meteors[i].speed * meteorRate;
+      meteors[i].x += meteors[i].speedX;
+      if (meteors[i].x < meteors[i].size / 2 || meteors[i].x > width - meteors[i].size / 2) {
+        meteors[i].x = constrain(meteors[i].x, meteors[i].size / 2,
+                                 width - meteors[i].size / 2);
+        meteors[i].speedX *= -1;
       }
       break;
   }
 
-  if (my[i] > height + 30) ResetMeteor(i);
+  if (meteors[i].y > height + 30) ResetMeteor(i);
 }
 
 function ResetMeteor(i) {
-  mx[i] = random(width);
-  my[i] = random(-150, 0);
-  startX[i] = mx[i];
-  speed[i] = random(1, 2);
-  speedX[i] = random(1, 2);
+  meteors[i].x = random(width);
+  meteors[i].y = random(-150, 0);
+  meteors[i].startX = meteors[i].x;
+  meteors[i].speed = random(1, 2);
+  meteors[i].speedX = random(1, 2);
 }
 
 class Bullet {
@@ -328,8 +331,9 @@ function BulletProcess() {
       bullets.splice(i, 1);
     } else {
       for (let j = n - 1; j >= 0; j--) {
-        let d = dist(bullets[i].x, bullets[i].y, mx[j], my[j]);
-        if (d < (bullets[i].size + size[j]) / 2) {
+        let d = dist(bullets[i].x, bullets[i].y,
+                     meteors[j].x, meteors[j].y);
+        if (d < (bullets[i].size + meteors[j].size) / 2) {
           burstSound.play();
           score += meteorPoint;
           ResetMeteor(j);
@@ -349,9 +353,9 @@ function PlayerSpeed() {
 }
 
 function CheckHit(i) {
-  let d = dist(px, py, mx[i], my[i]);
+  let d = dist(px, py, meteors[i].x, meteors[i].y);
 
-  if (d < playerSize / 2 + size[i] / 2)
+  if (d < playerSize / 2 + meteors[i].size / 2)
     return true;
   return false;
 }
@@ -384,11 +388,11 @@ function keyPressed() {
     ResetStar();
 
     for (let i = 0; i < n; i++) {
-      mx[i] = random(width);
-      startX[i] = mx[i];
-      my[i] = random(-500, 0);
-      speed[i] = random(0.5, 1);
-      speedX[i] = random(1, 2);
+      meteors[i].x = random(width);
+      meteors[i].startX = meteors[i].x;
+      meteors[i].y = random(-500, 0);
+      meteors[i].speed = random(0.5, 1);
+      meteors[i].speedX = random(1, 2);
     }
   }
 }
