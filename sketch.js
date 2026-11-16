@@ -296,7 +296,7 @@ class Meteor {
         break;
     }
 
-    if (this.y > height + 30) this.reset();
+    if (this.y > height + 30) this.reset(-150, 1, 2);
   }
 
   display() {
@@ -310,18 +310,36 @@ class Meteor {
             this.size, this.size);
   }
 
-  reset() {
+  reset(minY, minSpeed, maxSpeed) {
     this.x = random(width);
-    this.y = random(-150, 0);
+    this.y = random(minY, 0);
     this.startX = this.x;
-    this.speed = random(1, 2);
+    this.speed = random(minSpeed, maxSpeed);
     this.speedX = random(1, 2);
+  }
+}
+
+class Bullet {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.settings = { size: 8, speed: 8 };
+  }
+
+  move() {
+    this.y -= this.settings.speed;
+  }
+
+  display() {
+    noStroke();
+    fill(100, 220, 255);
+    ellipse(this.x, this.y, this.settings.size, this.settings.size);
   }
 }
 
 function Shoot() {
   if (ammo > 0) {
-    let bullet = { x: player.x, y: player.y, size: 8, speed: 8 };
+    let bullet = new Bullet(player.x, player.y);
     bullets.push(bullet);
     ammo--;
   }
@@ -329,11 +347,8 @@ function Shoot() {
 
 function BulletProcess() {
   for (let i = bullets.length - 1; i >= 0; i--) {
-    bullets[i].y -= bullets[i].speed;
-
-    noStroke();
-    fill(100, 220, 255);
-    ellipse(bullets[i].x, bullets[i].y, bullets[i].size, bullets[i].size);
+    bullets[i].move();
+    bullets[i].display();
 
     if (bullets[i].y < 0) {
       bullets.splice(i, 1);
@@ -341,10 +356,10 @@ function BulletProcess() {
       for (let j = n - 1; j >= 0; j--) {
         let d = dist(bullets[i].x, bullets[i].y,
                      meteors[j].x, meteors[j].y);
-        if (d < (bullets[i].size + meteors[j].size) / 2) {
+        if (d < (bullets[i].settings.size + meteors[j].size) / 2) {
           burstSound.play();
           score += meteorPoint;
-          meteors[j].reset();
+          meteors[j].reset(-150, 1, 2);
           bullets.splice(i, 1);
           break;
         }
@@ -394,11 +409,7 @@ function keyPressed() {
     ResetStar();
 
     for (let i = 0; i < n; i++) {
-      meteors[i].x = random(width);
-      meteors[i].startX = meteors[i].x;
-      meteors[i].y = random(-500, 0);
-      meteors[i].speed = random(0.5, 1);
-      meteors[i].speedX = random(1, 2);
+      meteors[i].reset(-500, 0.5, 1);
     }
   }
 }
