@@ -1,13 +1,14 @@
 // 주제명: 우주선 운석 피하기
 // 주제설명: 운석을 피하며 별을 먹어 1,000점을 얻고, 벽에서 튕기는 운석과 최고 점수 기록을 추가한 게임
-// 점수가 10,000점, 15,000점, 20,000점에 도달하면 난이도가 올라가고 운석의 낙하 속도가 빨라진다.
+// 점수가 10,000점, 15,000점, 20,000점에 도달하면 난이도가 올라가고 운석 수가 늘고 낙하 속도가 빨라진다.
 // 학번: 2023111663
 // 이름: 박경민
 
 
 //11주차 객체 리터럴 C언어의 구조체와 동일한 역할 변수를 엮은게 함수까지 엮음, 클래스 객체 들어감
 
-let n = 18;
+let maxMeteors = 18;
+let meteorCount = 12;
 let c;
 
 let meteors = [];
@@ -56,7 +57,7 @@ async function setup() {
   player = new Player();
   ResetStar();
 
-  for (let i = 0; i < n; i++) {
+  for (let i = 0; i < maxMeteors; i++) {
     meteors[i] = new Meteor(i);
 
     let r = random(0, 4);
@@ -103,12 +104,12 @@ function draw() {
 
     player.display();
 
-    for (let i = 0; i < n; i++)
+    for (let i = 0; i < meteorCount; i++)
       meteors[i].move(meteorRate);
 
     BulletProcess();
 
-    for (let i = 0; i < n; i++) {
+    for (let i = 0; i < meteorCount; i++) {
       meteors[i].display();
 
       if (!gameOver && CheckHit(i)) {
@@ -173,6 +174,7 @@ function StageChange() {
   else                    stage = 4;
 
   meteorRate = 1 + (stage - 1) * 0.2;
+  meteorCount = 12 + (stage - 1) * 2;
 }
 
 function StarProcess() {
@@ -353,7 +355,7 @@ function BulletProcess() {
     if (bullets[i].y < 0) {
       bullets.splice(i, 1);
     } else {
-      for (let j = n - 1; j >= 0; j--) {
+      for (let j = meteorCount - 1; j >= 0; j--) {
         let d = dist(bullets[i].x, bullets[i].y,
                      meteors[j].x, meteors[j].y);
         if (d < (bullets[i].settings.size + meteors[j].size) / 2) {
@@ -396,8 +398,7 @@ function keyPressed() {
     if (gameStarted == true) bgm.play();
 
     score = 0;
-    stage = 1;
-    meteorRate = 1;
+    StageChange();
     count = 0;
     bullets = [];
     ammo = 0;
@@ -408,7 +409,7 @@ function keyPressed() {
 
     ResetStar();
 
-    for (let i = 0; i < n; i++) {
+    for (let i = 0; i < maxMeteors; i++) {
       meteors[i].reset(-500, 0.5, 1);
     }
   }
